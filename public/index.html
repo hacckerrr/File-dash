@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Dash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>File Dash ⚡</h1>
+
+        <div id="connection-panel">
+            <div class="card">
+                <h2>Create Room</h2>
+                <button id="create-btn">Create Room</button>
+                <p id="room-code-display" class="hidden">Room Code: <span id="code-value"></span></p>
+            </div>
+
+            <div class="card">
+                <h2>Join Room</h2>
+                <input type="text" id="join-code" placeholder="Enter 5-digit code" maxlength="5">
+                <button id="join-btn">Join Room</button>
+            </div>
+        </div>
+
+        <div id="file-panel" class="hidden">
+            <div id="status">Connected! Ready to transfer.</div>
+
+            <div id="sender-area" class="hidden">
+                <input type="file" id="file-input">
+                <button id="send-btn" disabled>Send File</button>
+            </div>
+
+            <div id="progress-container" class="hidden">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="progress-text"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>File Dash &copy; 2026 | Secure P2P File Sharing</p>
+        <p style="margin-top: 0.5rem;"><a href="/developer.html"
+                style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Meet the Developer</a></p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
