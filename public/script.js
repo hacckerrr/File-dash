@@ -1,6 +1,6 @@
 // If deploying the backend separately (e.g. Render), put that URL here:
 // Example: const BACKEND_URL = 'my-file-dash-backend.onrender.com';
-const BACKEND_URL = location.host; 
+const BACKEND_URL = 'file-dash-backend.onrender.com'; 
 
 const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
 const ws = new WebSocket(`${wsProtocol}//${BACKEND_URL}`);
