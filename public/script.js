@@ -3,7 +3,6 @@
 const BACKEND_URL = 'file-dash-backend.onrender.com'; 
 
 const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-const ws = new WebSocket(`${wsProtocol}//${BACKEND_URL}`);
 const rtcConfig = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' }, // Standard hole-punch
@@ -49,43 +48,91 @@ const progressBar = document.getElementById('progress-bar');
 const progressText = document.getElementById('progress-text');
 const progressContainer = document.getElementById('progress-container');
 
-// WebSocket Handlers
-ws.onmessage = async (event) => {
-    const msg = JSON.parse(event.data);
+// WebSocket Auto-Reconnect Logic
+let ws;
+let isConnecting = false;
 
-    switch (msg.type) {
-        case 'room-created':
-            roomCode = msg.code;
-            codeValue.textContent = roomCode;
-            roomCodeDisplay.classList.remove('hidden');
-            statusText.textContent = "Waiting for peer to join...";
-            createBtn.disabled = true;
-            break;
+function connectWebSocket() {
+    if (isConnecting) return;
+    isConnecting = true;
+    
+    createBtn.disabled = true;
+    joinBtn.disabled = true;
+    statusText.textContent = "Waking up server (this may take up to 45s)...";
 
-        case 'peer-joined': // Sent to Sender
-            statusText.textContent = "Peer joined! Connecting...";
-            startWebRTC(true);
-            break;
+    ws = new WebSocket(`${wsProtocol}//${BACKEND_URL}`);
 
-        case 'room-joined': // Sent to Receiver
-            statusText.textContent = "Joined! Connecting...";
-            startWebRTC(false);
-            break;
+    ws.onopen = () => {
+        isConnecting = false;
+        if (!roomCode) {
+            createBtn.disabled = false;
+            joinBtn.disabled = false;
+            statusText.textContent = "Server connected! Ready to join or create a room.";
+        } else {
+            statusText.textContent = "Connected securely! Ready to transfer.";
+        }
+    };
 
-        case 'signal':
-            handleSignal(msg.data);
-            break;
+    ws.onmessage = async (event) => {
+        const msg = JSON.parse(event.data);
 
-        case 'peer-disconnected':
-            alert("Peer disconnected. Reload to start over.");
-            location.reload();
-            break;
+        switch (msg.type) {
+            case 'room-created':
+                roomCode = msg.code;
+                codeValue.textContent = roomCode;
+                roomCodeDisplay.classList.remove('hidden');
+                statusText.textContent = "Waiting for peer to join...";
+                createBtn.disabled = true;
+                joinBtn.disabled = true;
+                break;
 
-        case 'error':
-            alert(msg.message);
-            break;
-    }
-};
+            case 'peer-joined': // Sent to Sender
+                statusText.textContent = "Peer joined! Connecting...";
+                startWebRTC(true);
+                break;
+
+            case 'room-joined': // Sent to Receiver
+                statusText.textContent = "Joined! Connecting...";
+                startWebRTC(false);
+                break;
+
+            case 'signal':
+                handleSignal(msg.data);
+                break;
+
+            case 'peer-disconnected':
+                alert("Peer disconnected. Reload to start over.");
+                location.reload();
+                break;
+
+            case 'error':
+                alert(msg.message);
+                if (!roomCode) {
+                    createBtn.disabled = false;
+                    joinBtn.disabled = false;
+                    statusText.textContent = "Server connected! Ready to join or create a room.";
+                }
+                break;
+        }
+    };
+
+    ws.onclose = () => {
+        isConnecting = false;
+        createBtn.disabled = true;
+        joinBtn.disabled = true;
+        if (!roomCode) {
+            statusText.textContent = "Connection dropped. Reconnecting in 3 seconds...";
+        }
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = (err) => {
+        console.error("WebSocket error:", err);
+    };
+}
+
+// Start connection
+connectWebSocket();
 
 createBtn.onclick = () => {
     isSender = true;
